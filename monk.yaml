@@ -36,3 +36,4 @@ stack:
   defines: group
   members:
     - app-tutorial/mongodb
+    - app-tutorial/appapp
