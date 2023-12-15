@@ -1,0 +1,81 @@
+namespace: app-tutorial
+
+app-tutorial-database:
+  defines: runnable
+  inherits: app-tutorial/database
+  metadata:
+    name: app-tutorial-database
+    description: A MongoDB database service required by the Node.js web service.
+    icon: >-
+      https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA8VbFgxH-i78AZmNqD93mVRkTRd30POqLeCmg9T05ug&s
+  variables:
+    mongo-image:
+      type: string
+      value: latest
+      description: ''
+    mongo-init-database:
+      type: string
+      value: mongo
+      description: ''
+    mongo-init-password:
+      type: string
+      value: password
+      description: ''
+    mongo-init-username:
+      type: string
+      value: mongo
+      description: ''
+    mongodb-image:
+      type: string
+      value: latest
+      description: ''
+
+app-tutorial-app:
+  defines: runnable
+  metadata:
+    name: app-tutorial-app
+    description: >-
+      A Node.js web service that serves a guestbook application using Fastify
+      and connects to MongoDB.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    app-tutorial-app:
+      image: env-4227.registry.local/app-tutorial-app:master-66db62d
+      build: .
+      dockerfile: Dockerfile
+  services:
+    http-server-port:
+      description: Port for HTTP server to listen on.
+      container: app-tutorial-app
+      port: $port
+      host-port: $port
+      publish: true
+      protocol: tcp
+  connections:
+    mongo-connection:
+      target: app-tutorial/app-tutorial-database
+      service: mongodb
+      optional: true
+      description: Connection to the MongoDB database service.
+  variables:
+    db-host:
+      env: DB_HOST
+      type: string
+      value: <- connection-hostname("mongo-connection")
+      description: Hostname for the MongoDB database connection.
+    db-port:
+      env: DB_PORT
+      type: int
+      value: <- connection-port("mongo-connection")
+      description: Port for the MongoDB database connection.
+    port:
+      env: PORT
+      type: int
+      value: 8080
+      description: The port to listen for HTTP connections on.
+
+stack:
+  defines: group
+  members:
+    - app-tutorial/app-tutorial-database
+    - app-tutorial/app-tutorial-app
