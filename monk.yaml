@@ -1,0 +1,81 @@
+namespace: app-tutorial
+
+mongodb:
+  defines: runnable
+  inherits: mongodb/mongodb
+  metadata:
+    name: mongodb
+    description: A MongoDB database service.
+    icon: >-
+      https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA8VbFgxH-i78AZmNqD93mVRkTRd30POqLeCmg9T05ug&s
+  variables:
+    mongo-image:
+      type: string
+      value: latest
+      description: ''
+    mongo-init-database:
+      type: string
+      value: mongo
+      description: ''
+    mongo-init-password:
+      type: string
+      value: password
+      description: ''
+    mongo-init-username:
+      type: string
+      value: mongo
+      description: ''
+    mongodb-image:
+      type: string
+      value: latest
+      description: ''
+
+nodejs-app:
+  defines: runnable
+  metadata:
+    name: nodejs-app
+    description: >-
+      A Node.js web application that serves static content and connects to
+      MongoDB.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    nodejs-app:
+      image: env-4243.registry.local/nodejs-app:master-66db62d
+      build: .
+      dockerfile: Dockerfile
+  services:
+    http-service:
+      description: HTTP service port for the Node.js application
+      container: nodejs-app
+      port: $port
+      host-port: $port
+      publish: true
+      protocol: tcp
+  connections:
+    mongodb-connection:
+      target: app-tutorial/mongodb
+      service: mongodb
+      optional: true
+      description: Connection to the MongoDB database service
+  variables:
+    port:
+      env: PORT
+      type: int
+      value: 8080
+      description: The port on which the Node.js application will run
+    db-host:
+      env: DB_HOST
+      type: string
+      value: <- connection-hostname("mongodb-connection")
+      description: The hostname of the MongoDB database
+    db-port:
+      env: DB_PORT
+      type: int
+      value: <- connection-port("mongodb-connection")
+      description: The port on which the MongoDB database is running
+
+stack:
+  defines: group
+  members:
+    - app-tutorial/mongodb
+    - app-tutorial/nodejs-app
