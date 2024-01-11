@@ -1,0 +1,7 @@
+FROM mongo:latest
+
+# Expose the default port for MongoDB
+EXPOSE 27017
+
+# Set the default command for the container to run MongoDB
+CMD ["mongod"]
