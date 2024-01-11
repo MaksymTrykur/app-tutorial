@@ -1,0 +1,82 @@
+namespace: app-tutorial
+
+backend:
+  defines: runnable
+  metadata:
+    name: backend
+    description: Backend service using Fastify to serve API endpoints and static files.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    backend:
+      image: env-4908.registry.local/backend:master-tq32py
+      build: .
+      dockerfile: Dockerfile
+  services:
+    http-server-port:
+      description: HTTP server listening port for the backend service.
+      container: backend
+      port: $port
+      host-port: $port
+      publish: true
+      protocol: tcp
+  connections:
+    database-connection:
+      target: app-tutorial/mongodb
+      service: default-mongodb-port
+      optional: true
+      description: Connection from the backend service to the MongoDB database service.
+  variables:
+    port:
+      env: PORT
+      type: int
+      value: 8080
+      description: The port on which the backend service will run.
+    db-host:
+      env: DB_HOST
+      type: string
+      value: <- connection-hostname("database-connection")
+      description: The hostname of the database that the backend service connects to.
+    db-port:
+      env: DB_PORT
+      type: int
+      value: <- connection-port("database-connection")
+      description: The port on which the database service is running.
+
+mongodb:
+  defines: runnable
+  metadata:
+    name: mongodb
+    description: MongoDB database service for data persistence.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    mongodb:
+      image: env-4908.registry.local/mongodb:master-7kpdfh
+      build: .
+      dockerfile: Dockerfile.mongodb
+  services:
+    default-mongodb-port:
+      description: Default MongoDB port for database connections
+      container: mongodb
+      port: 27017
+      host-port: 27017
+      publish: true
+      protocol: tcp
+  connections:
+    backend-to-mongodb:
+      target: app-tutorial/backend
+      service: '!!!SETME!!!'
+      optional: true
+      description: MongoDB database service connection to backend service
+  variables: {}
+
+stack:
+  defines: group
+  members:
+    - app-tutorial/backend
+    - app-tutorial/mongodb
+  metadata:
+    name: nodejs-fastify-app
+    description: >-
+      A Node.js web application using Fastify framework to serve both API
+      endpoints and static files, with a MongoDB database for data persistence.
+    icon: https://emojiapi.dev/api/v1/globe_with_meridians.svg
