@@ -1,0 +1,85 @@
+namespace: app-tutorial
+
+mongodb:
+  defines: runnable
+  inherits: mongodb/mongodb
+  metadata:
+    name: mongodb
+    description: MongoDB database for storing guestbook entries.
+    icon: >-
+      https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA8VbFgxH-i78AZmNqD93mVRkTRd30POqLeCmg9T05ug&s
+  variables:
+    mongo-image:
+      type: string
+      value: latest
+      description: ''
+    mongo-init-database:
+      type: string
+      value: mongo
+      description: ''
+    mongo-init-password:
+      type: string
+      value: password
+      description: ''
+    mongo-init-username:
+      type: string
+      value: mongo
+      description: ''
+    mongodb-image:
+      type: string
+      value: latest
+      description: ''
+
+nodejs-fastify-guestbook:
+  defines: runnable
+  metadata:
+    name: nodejs-fastify-guestbook
+    description: Fastify server for guestbook application and static file serving.
+    icon: https://emojiapi.dev/api/v1/notebook_with_decorative_cover.svg
+  containers:
+    nodejs-fastify-guestbook:
+      image: env-4541.registry.local/nodejs-fastify-guestbook:master-e55ah0
+      build: .
+      dockerfile: Dockerfile
+  services:
+    http-server-port:
+      description: Port for HTTP server to handle incoming requests and serve static files.
+      container: nodejs-fastify-guestbook
+      port: $port
+      host-port: $port
+      publish: true
+      protocol: tcp
+  connections:
+    database-connection:
+      target: app-tutorial/mongodb
+      service: mongodb
+      optional: true
+      description: Connection to the MongoDB database service.
+  variables:
+    port:
+      env: PORT
+      type: int
+      value: 8080
+      description: The port on which the Fastify server will run.
+    db-host:
+      env: DB_HOST
+      type: string
+      value: <- connection-hostname("database-connection")
+      description: The hostname of the MongoDB database.
+    db-port:
+      env: DB_PORT
+      type: int
+      value: <- connection-port("database-connection")
+      description: The port on which the MongoDB database is running.
+
+stack:
+  defines: group
+  members:
+    - app-tutorial/mongodb
+    - app-tutorial/nodejs-fastify-guestbook
+  metadata:
+    name: nodejs-fastify-guestbook
+    description: >-
+      A Node.js web application using Fastify to serve a guestbook API and
+      static files.
+    icon: https://emojiapi.dev/api/v1/notebook_with_decorative_cover.svg
