@@ -1,0 +1,87 @@
+namespace: app-tutorial
+
+mongodb:
+  defines: runnable
+  inherits: mongodb/mongodb
+  metadata:
+    name: mongodb
+    description: MongoDB database service required by the Node.js application.
+    icon: >-
+      https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA8VbFgxH-i78AZmNqD93mVRkTRd30POqLeCmg9T05ug&s
+  variables:
+    mongo-image:
+      type: string
+      value: latest
+      description: ''
+    mongo-init-database:
+      type: string
+      value: mongo
+      description: ''
+    mongo-init-password:
+      type: string
+      value: password
+      description: ''
+    mongo-init-username:
+      type: string
+      value: mongo
+      description: ''
+    mongodb-image:
+      type: string
+      value: latest
+      description: ''
+
+monk-tutorial-app-service:
+  defines: runnable
+  metadata:
+    name: monk-tutorial-app-service
+    description: A simple service written in Node.js that connects to a MongoDB database.
+    icon: https://d29fhpw069ctt2.cloudfront.net/icon/image/37732/preview.svg
+  containers:
+    monk-tutorial-app-service:
+      image: env-6657.registry.local/monk-tutorial-app-service:master-g6c6os
+      build: .
+      dockerfile: Dockerfile
+  services:
+    http-server-port:
+      description: The HTTP server port exposed by the Node.js application
+      container: monk-tutorial-app-service
+      port: $port
+      host-port: $port
+      publish: true
+      protocol: tcp
+  connections:
+    mongodb-database-connection:
+      target: app-tutorial/mongodb
+      service: mongodb
+      optional: true
+      description: >-
+        Connection to the MongoDB database using environment variables for host
+        and port
+  variables:
+    port:
+      env: PORT
+      type: int
+      value: 8080
+      description: The port on which the Node.js server will listen
+    db-host:
+      env: DB_HOST
+      type: string
+      value: <- connection-hostname("mongodb-database-connection")
+      description: The hostname of the MongoDB database
+    db-port:
+      env: DB_PORT
+      type: int
+      value: <- connection-port("mongodb-database-connection")
+      description: The port on which the MongoDB database is running
+
+stack:
+  defines: group
+  members:
+    - app-tutorial/mongodb
+    - app-tutorial/monk-tutorial-app-service
+  metadata:
+    name: app-tutorial
+    description: >-
+      A simple Node.js application that serves static files and connects to a
+      MongoDB database.
+    icon: https://d29fhpw069ctt2.cloudfront.net/icon/image/37732/preview.svg
